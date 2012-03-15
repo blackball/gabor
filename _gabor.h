@@ -1,9 +1,6 @@
 #ifndef CVGABOR_H
 #define CVGABOR_H
 
-#include <iostream>
-
-
 #include <cv.h>
 #include <highgui.h>
 
@@ -13,9 +10,6 @@
 #define CV_GABOR_MAG  3
 #define CV_GABOR_PHASE 4
 
-/**
-   @author Mian Zhou
-*/
 class CvGabor{
 public:
   CvGabor();

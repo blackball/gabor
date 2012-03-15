@@ -1,6 +1,6 @@
 /* unit test */
 
-#include "Gabor.h"
+#include "gabor.h"
 
 static void test() {
 

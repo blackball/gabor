@@ -1,6 +1,6 @@
 
-#include "mygabor.h"
-#include "extract_gabor.h"
+#include "_gabor.h"
+#include "gabor.h"
 
 int _imgW = 0;
 int _imgH = 0;

@@ -1,4 +1,4 @@
-#include "mygabor.h"
+#include "_gabor.h"
 
 CvGabor::CvGabor() {
 }
