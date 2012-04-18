@@ -4,3 +4,18 @@ A dense gabor feature implementation based on OpenCV
 will work out another clean & efficient version soon.
 
 @blackball 
+
+Notes on new version Gabor based on FFTW3
+=====
+There're lots of 'wisdom' told when your kernel is 
+small, you'd better not using a fft routine...but 
+in my case, my target image was less than 100*100, 
+and the kernels was fixed at 15*15, and I have 
+4*8 == 32 kernels, in another words,I have to convolute 
+32 times in one not that big image.The benifit using DFT 
+is I could do a lot pre-computed work, and a rough esimation 
+shows I could gain a two-grade times faster speed.
+
+This is why I use DFT (FFTW3) to re-implement the dense gabor feature.
+
+@blackball 
