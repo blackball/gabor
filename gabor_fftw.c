@@ -9,6 +9,8 @@
 #include "fftw3.h"
 #include <math.h>
 
+EXTERN_BEGIN
+
 #define GABOR_PI 3.1415926535897932384626433832795
 
 struct GaborBank {
@@ -208,3 +210,5 @@ void gabor_destroy(struct GaborSetting *setting) {
   }
   return ;
 }
+
+EXTERN_END
