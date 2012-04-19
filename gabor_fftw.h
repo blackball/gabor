@@ -28,10 +28,16 @@ struct GaborBank;
 struct GaborSetting {
   int orientation_num;
   int scale_num;
-  int kenerl_w;
-  int kenerl_h;
-  int step_x;
-  int step_y;
+
+  int kernel_w;
+  int kernel_h;
+
+  int image_w; /* 'cause I use DFT here, the kernel */
+  int image_h; /* size is the same with image size */
+  
+  int step_x; /* feature sampling step in x-direction */
+  int step_y; /* feature sampling step in x-direction */
+
   int orientations[GABOR_ORIENTATION_NUM_MAX]; /* <num> * PI/8, so num could be [0,7]*/
   int scales[GABOR_SCALE_NUM_MAX]; /* <num> could be [0, 4] */
   /* filter bank */
@@ -39,17 +45,27 @@ struct GaborSetting {
 };
 
 /**
- * Initial gabor bank using given setting.
+ * First you need initialize the gabor setting.
+ * the function below  is an example, write yours
+ * when you're in a different situations.
  *
+ * @setting empty gabor setting
  */
 void gabor_init(struct GaborSetting *setting);
 
 /**
- * Get the gabor feature vector length.
+ * create gabor bank using given setting.
+ *
+ * @setting filled gabor setting
  */
-int gabor_length(const struct GaborSetting *setting,
-                  int width,
-                  int height);
+void gabor_create(struct GaborSetting *setting);
+
+/**
+ * Get the gabor feature vector length.
+ * 
+ * @setting Gabor setting, should be filled before.
+ */
+int gabor_length(const struct GaborSetting *setting);
 
 /**
  * Extract dense gabor feature.
@@ -57,7 +73,6 @@ int gabor_length(const struct GaborSetting *setting,
  */
 void gabor_extract(const struct GaborSetting *setting,
                    const unsigned char *image_data,
-                   int width, int height,
                    gabor_real *feat_vec);
 
 /**

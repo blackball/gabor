@@ -28,6 +28,29 @@ struct GaborBank {
 };
 
 /**
+ * Custom initialize the gabor setting.
+ *
+ * @setting un-initialized gaboe setting
+ */
+void gabor_init(struct GaborSetting *setting,
+                int img_w, int img_h,
+                int step_x, int step_y) {
+  setting->orientation_num = 8;
+  setting->scale_num = 4;
+  setting->kernel_w = setting->image_w = img_w;
+  setting->kernel_h = setting->image_h = img_h;
+  setting->step_x = step_x;
+  setting->step_y = step_y;
+  
+  for (int i = 0; i < 8; ++i)
+    setting->orientations[i] = i;
+  for (int i = 0; i < 4; ++i)
+    setting->scales[i] = i;
+
+  return ;
+}
+
+/**
  * Make gabor kernel and transform & align 
  * to be proper to do DFT.
  *
@@ -71,9 +94,10 @@ static void _gabor_mk_kernel(int iMu, int iNu, fftw_complex *vec, int width, int
 }
 
 /**
- * Initialize gabor filter bank, and their DFT represent.
+ * create gabor filter bank, and their DFT represent.
  */
-void gabor_init(struct GaborSetting *setting) {
+void gabor_create(struct GaborSetting *setting) {
+
   struct GaborBan *pBank;
   fftw_complex *tmp;
   
@@ -120,27 +144,25 @@ void gabor_init(struct GaborSetting *setting) {
                                                  idft_buffer,
                                                  FFTW_BACKWARD,
                                                  FFTW_ESTIMATE);
-  
-  for (int i = 0; i < pBank->filter_num; ++i) {
-    /* fill bank */
-    _gabor_mk_kernel(setting->iMus[i],
-                     setting->iNus[i],
-                     pBank->in_buffer,
-                     setting->kernel_w,
-                     setting->kernel_h);
-    
+
+  for (int i = 0; i < setting->scale_num; ++i)
+    for (int j = 0; j < setting->orientation_num; ++j) {
+      _gabor_mk_kernel(setting->orientations[i],
+                       setting->scales[j],
+                       pBank->in_buffer,
+                       setting->kernel_w,
+                       setting->kernel_h);
+      
     /* get the dft of the kernel */
     fftw_execute_dft(plan_foreward,
                      pBank->in_buffer,
-                     pBank->bank_dfts[i]);
-  }
-
+                     pBank->bank_dfts[ i*setting->orientation_num + j ]);
+    }
+  
   return ;
 }
 
-int gabor_length(const struct GaborSetting *setting,
-                 int width,
-                 int height) {
+int gabor_length(const struct GaborSetting *setting) {
   return
       (setting->kernel_w / setting->step_x) *
       (setting->kernel_h / setting->step_y) *
@@ -153,8 +175,8 @@ void gabor_extract(const struct GaborSetting *setting,
   /* extract dense gabor feature */
   struct GaborBank *pBank = setting->bank;
   int filter_num = pBank->filter_num;
-  int kernel_w = setting->kenerl_w;
-  int kernel_h = setting->kenerl_h;
+  int kernel_w = setting->kernel_w;
+  int kernel_h = setting->kernel_h;
   int step_x = setting->step_x;
   int step_y = setting->step_y;
   
@@ -169,6 +191,7 @@ void gabor_extract(const struct GaborSetting *setting,
     in_buffer[i].real = image_data[i];
     in_buffer[i],imag = .0;
   }
+  
   /* DFT on image data and store image's dft data in dft_buffer */
   fftw_execute_dft(pBank->plan_foreward,
                    in_buffer,
