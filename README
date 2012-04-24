@@ -18,4 +18,7 @@ shows I could gain a two-grade times faster speed.
 
 This is why I use DFT (FFTW3) to re-implement the dense gabor feature.
 
-@blackball 
+The efficient dense gabor feature was finished (just two files: gabor3.h, gabor3.h), 
+and an easy start example was lying in example3.cpp.
+
+@blackball <bugway@gmail.com>
