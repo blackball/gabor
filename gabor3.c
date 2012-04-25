@@ -249,20 +249,20 @@ void gabor_create(struct GaborSetting *setting) {
   pBank->dft_buffer = tmp;
   tmp += pBank->filter_len;
   pBank->idft_buffer = tmp;
-
+  
   pBank->plan_forward = fftw_plan_dft_2d(pBank->opt_sz,
                                          pBank->opt_sz,
                                          pBank->in_buffer,
                                          pBank->dft_buffer,
                                          FFTW_FORWARD,
-                                         FFTW_ESTIMATE);
+                                         FFTW_MEASURE);
   
   pBank->plan_backward = fftw_plan_dft_2d(pBank->opt_sz,
                                           pBank->opt_sz,
                                           pBank->dft_buffer,
                                           pBank->idft_buffer,
                                           FFTW_BACKWARD,
-                                          FFTW_ESTIMATE);
+                                          FFTW_MEASURE);
 
   for (i = 0; i < setting->scale_num; ++i)
     for (j = 0; j < setting->orientation_num; ++j) {
