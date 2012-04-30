@@ -1,13 +1,12 @@
 /**
- * Dense gabor feature implemented using FFTW3.
- *
- * @blackball<bugway@gmail.com>
+ * Last version, I misunderstood the dft process when used in convloution.
+ * 
+ * Here is the final correct version, and for the sake of effcientcy,
+ * I made this version configurable.
  */
 
-#ifndef GABOR_FFTW_H
-#define GABOR_FFTW_H
-
-#include "fftw3.h"
+#ifndef GABOR_H
+#define GABOR_H
 
 #ifdef __cplusplus
 #define EXTERN_BEGIN extern "C" { 
@@ -21,13 +20,20 @@ EXTERN_BEGIN
 
 typedef double gabor_real;
 
+/**
+ * The maximum orientations and scales.
+ */
 #define GABOR_ORIENTATION_NUM_MAX 8
 #define GABOR_SCALE_NUM_MAX 4
 
-/* gabor feature type */
-#define GABOR_REAL 0
-#define GABOR_IMAG 1
-#define GABOR_MAG  2
+/**
+ * You need to define a macro to select the mode
+ * GABOR_REAL -- just real part convolusion
+ * GABOR_IMAG -- just imaginary part convolution
+ * GABOR_MAG  -- magnitude ...
+ */
+#define GABOR_REAL
+
 
 /**
  * Give all gabor configuration. 
@@ -49,6 +55,7 @@ struct GaborSetting {
   /* filter bank */
   struct GaborBank* bank;
 };
+
 
 /**
  * First you need initialize the gabor setting.
@@ -91,32 +98,5 @@ void gabor_destroy(struct GaborSetting *setting);
 
 EXTERN_END
 
-
-#if 0
-/* A usage example */
-{
-  struct GaborSetting setting;
-  ImageType *frame = getNextFrame();
-
-  fill_setting( &setting, frame->width, frame->height );
-  
-  int gabor_len = gabor_length( &setting );
-  gabor_real *feat_vec = ( gabor_real* )malloc( sizeof(gabor_real) * gabor_len );
-  
-  /* write your own initalization method */
-  gabor_init(&setting, frame->w, frame->h, step_x, step_y);
-
-  /* create buffer and banks */
-  gabor_create(&setting);
-  
-  while( frame = getNextFrame() ) {
-    gabor_extract( &setting, frame->imageData, feat_vec );
-    /* do something with feat_vec */
-  }
-
-  gabor_destroy( &setting );
-  free( feat_vec );  
-}
-#endif
 
 #endif
