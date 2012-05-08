@@ -2,6 +2,9 @@
  * Temporary put static utils here.
  */
 #include <fftw3.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 static int _gabor_get_optimalsz(int n) {
     int m, newsz = n;
@@ -28,63 +31,43 @@ static void _gabor_scale(double *vec, int n, double scale) {
 #ifndef GABOR_PI
 #define GABOR_PI 3.1415926535897932384626433832795
 #endif
-static void _gabor_mk_kernel(int iNu,
-                             int iMu,
+static void _gabor_mk_kernel(int iNu, int iMu,
                              double *real,
                              double *imag,
                              int opt_sz) {
-    int x,y,i,j;
-
-    double Kmax = GABOR_PI / 2;
-    double dFreq = sqrt(2.0);
-    double K = Kmax / pow(dFreq, (double)iNu);
-    double sigma = 2 * GABOR_PI;
-    double phi = iMu * (GABOR_PI/8);
+	int x, y,i,j;
+    double dReal;
+    double dImag;
     double dTemp1, dTemp2, dTemp3;
-
-    double
-        K2 = pow(K, 2),
-        sigma2 = pow(sigma, 2),
-        k2divsigma2 = K2 / sigma2,
-        k2div2sigma2 = K2 / (2*sigma2),
-        kcosphi = K * cos(phi),
-        ksinphi = K * sin(phi),
-        exphalfsigma2 = exp(-sigma2 / 2);
-
-    /* for L1 normalization */
-    long double rsum = .0, isum = .0;
-
-    for (i = 0; i < opt_sz; ++i) {
-        y = i - (opt_sz - 1) / 2;
-        for (j = 0; j < opt_sz; ++j) {
-            x = j - (opt_sz - 1) / 2;
-            dTemp1 = k2divsigma2 * exp( -(x*x+y*y) * k2div2sigma2 );
-            dTemp3 = kcosphi * x + ksinphi * y;
-            dTemp2 = cos( dTemp3 ) - exphalfsigma2;
-            dTemp3 = sin( dTemp3 );
-
-            dTemp2 = dTemp1 * dTemp2;
-            rsum += dTemp2;
-            real[i*opt_sz + j] = dTemp2;
-            dTemp2 = dTemp1 * dTemp3;
-            imag[i*opt_sz + j] = dTemp2;
-            isum += dTemp2;
-        }
+	double Sigma = 2 * GABOR_PI;
+	double Kmax = GABOR_PI / 2;
+	double dFreq = sqrt(2.0);
+	double K = Kmax / pow(dFreq, (double)iNu);
+	double Phi = iMu * (GABOR_PI/8);
+    for (i = 0; i < opt_sz; i++)
+    {
+		y = i-(opt_sz-1)/2;
+        for (j = 0; j < opt_sz; j++)
+        {
+            x = j-(opt_sz-1)/2;
+            dTemp1 = (pow(K,2)/pow(Sigma,2))*exp(-(pow((double)x,2)+pow((double)y,2))*pow(K,2)/(2*pow(Sigma,2)));
+            dTemp2 = cos(K*cos(Phi)*y + K*sin(Phi)*x) - exp(-(pow(Sigma,2)/2));
+            dTemp3 = sin(K*cos(Phi)*y + K*sin(Phi)*x);
+            dReal = dTemp1*dTemp2;
+            dImag = dTemp1*dTemp3; 
+ 
+			real[i*opt_sz + j] = dReal;
+			imag[i*opt_sz + j] = dImag;
+        } 
     }
-
-    /* L1 normalize */
-    if (rsum != 0)
-        _gabor_scale(real, opt_sz * opt_sz, 1.0/rsum);
-
-    if (isum != 0)
-        _gabor_scale(imag, opt_sz*opt_sz, 1.0/isum);
 }
+
 
 static void _gabor_pad_kernel(double *src, int sw, int sh,
                               double *dst, int dw, int dh) {
     int si,sj,di,dj;
 
-    int cent_x = sw / 2, cent_y = sh / 2;
+    int cent_x = (sw - 1) / 2, cent_y = (sh - 1) / 2;
 
     double *psrc = src;
     double *pdst = dst;
@@ -109,30 +92,33 @@ static void _gabor_pad_kernel(double *src, int sw, int sh,
             pdst[di*dw + dj] = psrc[si*sw + sj];
 }
 
-static void _gabor_mult(const fftw_complex *src0,
+static void _gabor_mult_scale(const fftw_complex *src0,
                         const fftw_complex *src1,
                         fftw_complex *dst,
-                        int len) {
-    int i;
+                        int opt_sz) {
+    int i, j, ij, half = opt_sz/2 + 1;
     const fftw_complex *psrc0 = src0, *psrc1 = src1;
     fftw_complex *pdst = dst;
     double k1, k2, k3,a,b,c,d;
+	double scale = 1.0 / (opt_sz * opt_sz);
 
-    for (i = 0; i < len; ++i) {
-        a = psrc0[0][0];
-        b = psrc0[0][1];
-        c = psrc1[0][0];
-        d = psrc1[0][1];
+    for (i = 0; i < opt_sz; ++i) {
+		for (j = 0; j < half; ++j) {
+			ij = i * half + j;
 
-        k1 = a * (c + d);
-        k2 = d * (a + b);
-        k3 = c * (b - a);
+			a = psrc0[ij][0];
+			b = psrc0[ij][1];
+			c = psrc1[ij][0];
+			d = psrc1[ij][1];
 
-        pdst[0][0] = k1 - k2;
-        pdst[0][1] = k1 + k3;
+			k1 = a * (c + d);
+			k2 = d * (a + b);
+			k3 = c * (b - a);
 
-        psrc0 ++; psrc1 ++; pdst ++;
-    }
+			pdst[ij][0] = (k1 - k2) * scale;
+			pdst[ij][1] = (k1 + k3) * scale ;
+		}
+	}
 }
 
 static void _gabor_calc_mag(const double *real,
